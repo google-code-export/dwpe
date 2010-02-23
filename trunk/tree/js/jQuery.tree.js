@@ -64,6 +64,19 @@ $.fn.tree = function(settings){
 					$(this).addClass('tree-group-collapsed').removeAttr('style');
 				});
 			})
+			.bind('toggle',function(event){
+				var target = $(event.target) || tree.find('a[tabindex=0]');
+				//check if target parent LI is collapsed
+				if( target.parent().is('[aria-expanded=false]') ){ 
+					//call expand function on the target
+					target.trigger('expand');
+				}
+				//otherwise, parent must be expanded
+				else{ 
+					//collapse the target
+					target.trigger('collapse');
+				}
+			})
 			//shift focus down one item		
 			.bind('traverseDown',function(event){
 				var target = $(event.target) || tree.find('a[tabindex=0]');
@@ -109,16 +122,7 @@ $.fn.tree = function(settings){
 				var target = $(event.target);
 				//check if target is a tree node
 				if( target.is('a.tree-parent') ){
-					//check if target parent LI is collapsed
-					if( target.parent().is('[aria-expanded=false]') ){ 
-						//call expand function on the target
-						target.trigger('expand');
-					}
-					//otherwise, parent must be expanded
-					else{ 
-						//collapse the target
-						target.trigger('collapse');
-					}
+					target.trigger('toggle');
 					target.eq(0).focus();
 					//return click event false because it's a tree node (folder)
 					return false;
@@ -147,6 +151,12 @@ $.fn.tree = function(settings){
 						//return any of these keycodes false
 						return false;
 					}	
+					//check if enter or space was pressed on a tree node
+					else if((event.keyCode == 13 || event.keyCode == 32) && target.is('a.tree-parent')){
+							target.trigger('toggle');
+							//return click event false because it's a tree node (folder)
+							return false;
+					}
 			});
 		}
 	});
