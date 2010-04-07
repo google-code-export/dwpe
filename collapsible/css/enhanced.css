@@ -12,6 +12,7 @@ div#message {
 	-webkit-border-radius:5px;
 	border-radius:5px;
 	width:430px;
+	margin-bottom: 20px;
 }
 
 div#message h1 {
@@ -41,15 +42,21 @@ div#message li {
 	font-size:1.3em;
 	color:#000;
 	border-bottom:1px solid #aaa;
-	padding:.5em 0;
-	list-style:inside url(../images/icon-file-warning.png);
+	padding:.5em 40px .5em 30px;
+	background: url(../images/icon-file-warning.png) left center no-repeat;
+	display: block;
+	list-style: none;
+	overflow: hidden;
+}
+
+div#message li span.file {
+	float: left;
 }
 
 div#message li em {
 	color:#666;
 	font-style:italic;
 	float:right;
-	margin-right:40px;
 	font-size:.9em;
 }
 
