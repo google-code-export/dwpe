@@ -76,6 +76,9 @@ div#message li em {
 	position:absolute;
 	left:-99999px;
 }
+.collapsible-content {
+	overflow: hidden;
+}
 .collapsible-content-collapsed {
 	display:none;
 }
