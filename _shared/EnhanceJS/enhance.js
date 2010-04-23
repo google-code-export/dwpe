@@ -1,15 +1,18 @@
 /*
  * EnhanceJS version 1.0a - Test-Driven Progressive Enhancement
+ * http://enhancejs.googlecode.com/
  * Copyright (c) 2010 Filament Group, Inc, authors.txt
  * Licensed under MIT (license.txt)
 */
-(function(win, doc) {
-var settings, body, windowLoaded, head;
+(function(win, doc, undefined) {
+var settings, body, windowLoaded, head, 
+	docElem = doc.documentElement,
+	testPass = false;
 	
-if(doc.getElementsByTagName){ head = doc.getElementsByTagName('head')[0] || doc.documentElement; }
-else{ head = doc.documentElement; }
+if(doc.getElementsByTagName){ head = doc.getElementsByTagName('head')[0] || docElem; }
+else{ head = docElem; }
 
-enhance = function(options) {
+win.enhance = function(options) {
     options  = options || {};
     settings = {};
     
@@ -24,12 +27,20 @@ enhance = function(options) {
         settings.tests[test] = options.addTests[test];
     }
     
+    //add testName class immediately for FOUC prevention, remove later on fail
+    if (docElem.className.indexOf(settings.testName) === -1) {
+        docElem.className += ' ' + settings.testName;
+    }
+    
+    //fallback for removing testName class
+    setTimeout(function(){ if(!testPass){ removeHTMLClass(); } }, 3000);
+
     runTests();
     
     applyDocReadyHack();
     
-    windowLoad(function() {
-        windowLoaded = true;
+    windowLoad(function() { 
+    	windowLoaded = true; 
     });
 };
 
@@ -79,13 +90,14 @@ enhance.defaultTests = {
         body.removeChild(newDiv);
         return pass;
     },
-    overflow: function() {
+    heightOverflow: function() {
         var newDiv = doc.createElement('div');
-        newDiv.innerHTML = '<div style="height: 10px; overflow: hidden;"></div>';
+        newDiv.innerHTML = '<div style="height: 10px;"></div>';
+        newDiv.style.cssText = 'overflow: hidden; height: 0;';
         body.appendChild(newDiv);
         var divHeight = newDiv.offsetHeight;
         body.removeChild(newDiv);
-        return divHeight === 10;
+        return divHeight === 0;
     },
     ajax: function() {
         //factory test borrowed from quirksmode.org
@@ -124,10 +136,12 @@ enhance.defaultSettings = {
     alertOnFailure: false,
     onPass: function(){},
     onFail: function(){},
-    onLoadError: addIncompleteClass
+    onLoadError: addIncompleteClass,
+    onScriptsLoaded: function(){}
 };
 
 function cookiesSupported(){
+	if(!!!doc.cookie){ return false; }
 	var testCookie = 'enhancejs-cookietest';
 	createCookie(testCookie, 'enabled');
 	var result = readCookie(testCookie);
@@ -141,7 +155,6 @@ function forceFail() {
     win.location.reload();
 }
 if(enhance.cookiesSupported){ enhance.forceFail = forceFail; }
-
 
 function forcePass() {
     createCookie(settings.testName, 'pass');
@@ -165,6 +178,7 @@ function runTests() {
             settings.onPass();
         } else {
             settings.onFail();
+            removeHTMLClass();
         }
         
         // append toggle link
@@ -193,11 +207,12 @@ function runTests() {
             if (pass) {
                 enhancePage();
                 settings.onPass();
-            } else {
-                settings.onFail();
             }
-            
-            // append toggle link
+            else {
+                settings.onFail();
+                removeHTMLClass();
+            }
+                        
             if (settings.appendToggleLink) {
                 windowLoad(function() { 
                     appendToggleLinks(result);
@@ -232,7 +247,6 @@ function windowLoad(callback) {
 
 function appendToggleLinks(result) {
     if (!settings.appendToggleLink || !enhance.cookiesSupported) { return; }
-        
     if (result) {
         var a = doc.createElement('a');
         a.href = "#";
@@ -243,23 +257,27 @@ function appendToggleLinks(result) {
     }
 }
 
+function removeHTMLClass(){
+	docElem.className = docElem.className.replace(settings.testName,'');
+}
+
 function enhancePage() {
-    if (doc.documentElement.className.indexOf(settings.testName) === -1) {
-        doc.documentElement.className += ' ' + settings.testName;
-    }
-    
+	testPass = true;
     if (settings.loadStyles.length) {
         appendStyles();
     }
     if (settings.loadScripts.length) {
         settings.queueLoading ? appendScriptsSync() : appendScriptsAsync();
     }
+    else{
+    	settings.onScriptsLoaded();
+    }
 }
 
 function addIncompleteClass (){
 	var errorClass = settings.testName + '-incomplete';
-	if (doc.documentElement.className.indexOf(errorClass) === -1) {
-        doc.documentElement.className += ' ' + errorClass;
+	if (docElem.className.indexOf(errorClass) === -1) {
+        docElem.className += ' ' + errorClass;
     }
 }
 
@@ -269,7 +287,6 @@ function appendStyles() {
     
     while ((item = settings.loadStyles[++index])) {
         var link  = doc.createElement('link');
-        
         link.type = 'text/css';
         link.rel  = 'stylesheet';
         link.onerror = settings.onLoadError;
@@ -284,50 +301,73 @@ function appendStyles() {
                     link.setAttribute(attr, item[attr]);
                 }    
             }
-            if (item['iecondition'] && isIE()) {
+            if (item['iecondition']) {
                 if (isIE(item['iecondition'])) {
                     head.appendChild(link); 
                 }
+                else{
+                	return false;
+                }
             }
-            else if (!item['iecondition']) {
+            else {
                 head.appendChild(link);
             }
         }
     }
 }
 
-function isIE(version) {
-	var isIE = (/MSIE (\d+)\.\d+;/).test(navigator.userAgent);
-	var ieVersion = new Number(RegExp.$1);
-	if(isIE && version){
-		if (version === 'all' || version == ieVersion) { return true; }
-	}
-	else{ return isIE; }
-}
+var isIE = (function() {
+	var cache = {},
+		b;
+    	
+    return function(condition) {	
+    	if(/*@cc_on!@*/true){return false;}
+		var cc = 'IE';
+		if(condition){ 
+			if(condition !== 'all'){ //deprecated support for 'all' keyword
+				if( !isNaN(parseFloat(condition)) ){ 
+					cc += ' ' + condition; //deprecated support for straight version #
+				}
+				else {
+					cc = condition; //recommended (conditional comment syntax)
+				}
+			}
+		}
+		
+		if (cache[cc] === undefined) {
+			b = b || doc.createElement('B');
+			b.innerHTML = '<!--[if '+ cc +']><b></b><![endif]-->';
+			cache[cc] = !!b.getElementsByTagName('b').length;
+		}
+		return cache[cc];
+	}	
+})();
 
 function appendScriptsSync() {
     var queue = [].concat(settings.loadScripts);
     
     function next() {
         if (queue.length === 0) {
-            return;
+            return false;
         }
         
-        var item    = queue.shift();
+        var item    = queue.shift(),
             script = createScriptTag(item),
             done   = false;
         if(script){
 	        script.onload = script.onreadystatechange = function() {
 	            if (!done && (!this.readyState || this.readyState == 'loaded' || this.readyState == 'complete')) {
 	                done = true;
-	                next();
+	                if(next() === false){
+	                	settings.onScriptsLoaded();
+	                }
 	                this.onload = this.onreadystatechange = null;
 	            }
 	        }
 	        head.insertBefore(script, head.firstChild);
         }
         else{
-        	next();
+        	return next();
         }
     }
     
@@ -344,6 +384,7 @@ function appendScriptsAsync() {
         	head.insertBefore(script, head.firstChild);
         }	
     }
+    settings.onScriptsLoaded();
 }
 
 function createScriptTag(item) {
@@ -361,28 +402,26 @@ function createScriptTag(item) {
                 script.setAttribute(attr, item[attr]);
             }    
         }
-        if (item['iecondition'] && isIE()) {
+        if (item['iecondition']) {
             if (isIE(item['iecondition'])) {
                 return script;
             }
+            else {
+            	return false;
+            }
         }
-        else if (!item['iecondition']) {
+        else {
             return script;
-        }
-        else{
-        	return false;
         }
     }
 }
 
-/*cookie functions from quirksmode.org*/
+/* cookie functions from quirksmode.org (modified) */
 function createCookie(name, value, days) {
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
-    }
-    else var expires = "";
+    days = days || 90;
+    var date = new Date();
+    date.setTime(date.getTime()+(days*24*60*60*1000));
+    var expires = "; expires="+date.toGMTString();
     doc.cookie = name+"="+value+expires+"; path=/";
 }
 
@@ -419,7 +458,7 @@ function applyDocReadyHack() {
         // set readyState = loading or interactive
         // it does not really matter for this purpose
         doc.readyState = "loading";
-			}
+	}
 }
 		
 		
