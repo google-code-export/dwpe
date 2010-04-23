@@ -63,6 +63,7 @@ div#message li em {
 .collapsible-heading {
 	padding-left:15px;
 	background:url(../images/icon-triangle.png) 0 6px no-repeat;
+	cursor: pointer;
 }
 .collapsible-heading-collapsed {
 	background-position:0 -84px;
@@ -75,7 +76,6 @@ div#message li em {
 	position:absolute;
 	left:-99999px;
 }
-
 .collapsible-content-collapsed {
 	display:none;
 }
