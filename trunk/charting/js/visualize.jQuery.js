@@ -21,6 +21,7 @@ $.fn.visualize = function(options, container){
 			textColors: [], //corresponds with colors array. null/undefined items will fall back to CSS
 			parseDirection: 'x', //which direction to parse the table data
 			pieMargin: 20, //pie charts only - spacing around pie
+			pieLabelsAsPercent: true,
 			pieLabelPos: 'inside',
 			lineWeight: 4, //for line and area - stroke weight
 			barGroupMargin: 10,
@@ -210,7 +211,8 @@ $.fn.visualize = function(options, container){
 			        var percentage = parseFloat((fraction*100).toFixed(2));
 
 			        if(percentage){
-				        var labeltext = $('<span class="visualize-label">' + percentage + '%</span>')
+			        	var labelval = (o.pieLabelsAsPercent) ? percentage + '%' : this;
+				        var labeltext = $('<span class="visualize-label">' + labelval +'</span>')
 				        	.css(leftRight, 0)
 				        	.css(topBottom, 0);
 				        	if(labeltext)
