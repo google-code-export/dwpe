@@ -207,7 +207,8 @@ $.fn.visualize = function(options, container){
 			        var labely = Math.round(centery - Math.cos(sliceMiddle * Math.PI * 2) * (distance));
 			        var leftRight = (labelx > centerx) ? 'right' : 'left';
 			        var topBottom = (labely > centery) ? 'bottom' : 'top';
-			        var percentage = Math.round(fraction*100);
+			        var percentage = parseFloat((fraction*100).toFixed(2));
+
 			        if(percentage){
 				        var labeltext = $('<span class="visualize-label">' + percentage + '%</span>')
 				        	.css(leftRight, 0)
@@ -221,7 +222,6 @@ $.fn.visualize = function(options, container){
 				        	.css('font-size', radius / 8)		
 				        	.css('margin-'+leftRight, -labeltext.width()/2)
 				        	.css('margin-'+topBottom, -labeltext.outerHeight()/2);
-				        	
 				        	
 				        if(dataGroups[i].textColor){ labeltext.css('color', dataGroups[i].textColor); }	
 			        }
