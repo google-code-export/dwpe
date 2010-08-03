@@ -12,9 +12,20 @@ $.fn.customFileInput = function(){
 		.addClass('customfile-input') //add class for CSS
 		.mouseover(function(){ upload.addClass('customfile-hover'); })
 		.mouseout(function(){ upload.removeClass('customfile-hover'); })
-		.focus(function(){ upload.addClass('customfile-focus'); })
-		.blur(function(){ upload.removeClass('customfile-focus'); })
-		.change(function(){
+		.focus(function(){ 
+			upload.addClass('customfile-focus'); 
+			fileInput.data('val', fileInput.val());
+		})
+		.blur(function(){ 
+			upload.removeClass('customfile-focus');
+			$(this).trigger('checkChange');
+		 })
+		.bind('checkChange', function(){
+			if(fileInput.val() && fileInput.val() != fileInput.data('val')){
+				fileInput.trigger('change');
+			}
+		})
+		.bind('change',function(){
 			//get file name
 			var fileName = $(this).val().split(/\\/).pop();
 			//get file extension
@@ -27,33 +38,34 @@ $.fn.customFileInput = function(){
 				.data('fileExt', fileExt) //store file extension for class removal on next change
 				.addClass('customfile-feedback-populated'); //add class to show populated state
 			//change text of button	
-			uploadButton.text('Change');
+			uploadButton.text('Change');		
 		})
-		.css('opacity',0); //visually hide element
+		.click(function(){ //for IE and Opera, make sure change fires after choosing a file, using an async callback
+			fileInput.data('val', fileInput.val());
+			setTimeout(function(){
+				fileInput.trigger('checkChange');
+			},100);
+		});
 		
 	//create custom control container
-	var upload = $('<div class="customfile" aria-hidden="true"></div>');
+	var upload = $('<div class="customfile"></div>');
 	//create custom control button
-	var uploadButton = $('<span class="customfile-button">Browse</span>').appendTo(upload);
+	var uploadButton = $('<span class="customfile-button" aria-hidden="true">Browse</span>').appendTo(upload);
 	//create custom control feedback
-	var uploadFeedback = $('<span class="customfile-feedback">No file selected...</span>').appendTo(upload);
+	var uploadFeedback = $('<span class="customfile-feedback" aria-hidden="true">No file selected...</span>').appendTo(upload);
 	
 	//on mousemove, keep file input under the cursor to steal click
 	upload
-		.mouseover(function(){
-			fileInput.appendTo('body');
-		})
-		.mouseout(function(){
-			fileInput.insertBefore(upload);
-		})
 		.mousemove(function(e){
-			fileInput
-			.css({ 
-				top: e.pageY - 3, //position 3px above cursor Y
-				left: e.pageX - fileInput.outerWidth() + 20 //position right side 20px right of cursor X
-			});
+			fileInput.css({
+				'left': e.pageX - upload.offset().left - fileInput.outerWidth() + 20, //position right side 20px right of cursor X)
+				'top': e.pageY - upload.offset().top - $(window).scrollTop() - 3
+			});	
 		})
 		.insertAfter(fileInput); //insert after the input
+	
+	fileInput.appendTo(upload);
+		
 	//return jQuery
 	return $(this);
 };
