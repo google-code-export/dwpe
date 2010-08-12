@@ -12,7 +12,7 @@ $.fn.customFileInput = function(){
 		.addClass('customfile-input') //add class for CSS
 		.mouseover(function(){ upload.addClass('customfile-hover'); })
 		.mouseout(function(){ upload.removeClass('customfile-hover'); })
-		.focus(function(){ 
+		.focus(function(){
 			upload.addClass('customfile-focus'); 
 			fileInput.data('val', fileInput.val());
 		})
@@ -20,6 +20,14 @@ $.fn.customFileInput = function(){
 			upload.removeClass('customfile-focus');
 			$(this).trigger('checkChange');
 		 })
+		 .bind('disable',function(){
+		 	fileInput.attr('disabled',true);
+			upload.addClass('customfile-disabled');
+		})
+		.bind('enable',function(){
+			fileInput.removeAttr('disabled');
+			upload.removeClass('customfile-disabled');
+		})
 		.bind('checkChange', function(){
 			if(fileInput.val() && fileInput.val() != fileInput.data('val')){
 				fileInput.trigger('change');
@@ -53,6 +61,12 @@ $.fn.customFileInput = function(){
 	var uploadButton = $('<span class="customfile-button" aria-hidden="true">Browse</span>').appendTo(upload);
 	//create custom control feedback
 	var uploadFeedback = $('<span class="customfile-feedback" aria-hidden="true">No file selected...</span>').appendTo(upload);
+	
+	//match disabled state
+	if(fileInput.is('[disabled]')){
+		fileInput.trigger('disable');
+	}
+		
 	
 	//on mousemove, keep file input under the cursor to steal click
 	upload
