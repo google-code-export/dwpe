@@ -132,13 +132,27 @@ $.fn.tree = function(settings){
 					var target = tree.find('a[tabindex=0]');
 					//check for arrow keys
 					if(event.keyCode == 37 || event.keyCode == 38 || event.keyCode == 39 || event.keyCode == 40){
-						//if key is left arrow and list is collapsed
-						if(event.keyCode == 37 && target.parent().is('[aria-expanded=true]')){ 
-							target.trigger('collapse');
-						}
-						//if key is right arrow and list is collapsed
-						if(event.keyCode == 39 && target.parent().is('[aria-expanded=false]')){ 
-							target.trigger('expand');
+						//if key is left arrow 
+						if(event.keyCode == 37){ 
+							//if list is expanded
+							if(target.parent().is('[aria-expanded=true]')){
+								target.trigger('collapse');
+							}
+							//try traversing to parent
+							else {
+								target.parents('li:eq(1)').find('a').eq(0).focus();
+							}	
+						}						
+						//if key is right arrow
+						if(event.keyCode == 39){ 
+							//if list is collapsed
+							if(target.parent().is('[aria-expanded=false]')){
+								target.trigger('expand');
+							}
+							//try traversing to child
+							else {
+								target.parents('li:eq(0)').find('li a').eq(0).focus();
+							}
 						}
 						//if key is up arrow
 						if(event.keyCode == 38){ 
