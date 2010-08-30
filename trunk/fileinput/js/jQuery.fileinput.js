@@ -7,6 +7,7 @@
  * --------------------------------------------------------------------
  */
 $.fn.customFileInput = function(){
+	return $(this).each(function(){
 	//apply events and styles for file input element
 	var fileInput = $(this)
 		.addClass('customfile-input') //add class for CSS
@@ -80,6 +81,5 @@ $.fn.customFileInput = function(){
 	
 	fileInput.appendTo(upload);
 		
-	//return jQuery
-	return $(this);
+	});
 };
